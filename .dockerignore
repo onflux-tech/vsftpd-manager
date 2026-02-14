@@ -1,0 +1,8 @@
+# Ignorar no build
+.git
+.gitignore
+.env
+README.md
+LICENSE
+docker-compose.yml
+data/

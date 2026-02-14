@@ -1,0 +1,17 @@
+# Dados persistentes (senhas em texto)
+data/users.json
+
+# Ambiente e IDE
+.env
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker build cache
+*.tar

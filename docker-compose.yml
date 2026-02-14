@@ -1,0 +1,49 @@
+services:
+  ftp-server:
+    image: ghcr.io/onflux-tech/vsftpd-manager:latest
+    container_name: ftp-server
+    restart: unless-stopped
+    environment:
+      PUID: 1000
+      PGID: 1000
+      # Bootstrap admin user. Additional users are managed via API/UI
+      # and persisted in ./data/users.json automatically.
+      USERS: "admin|ChangeThisPassword123|/ftp/admin"
+      ADDRESS: ftp.example.com
+      MIN_PORT: 50000
+      MAX_PORT: 50100
+      MANAGER_PORT: 8080
+      ADMIN_TOKEN: change-this-to-a-strong-token
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./ftp-data:/ftp
+      - ./data:/data
+    networks:
+      - proxy
+    ports:
+      - "21:21"
+      - "50000-50100:50000-50100"
+      - "8080:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      - "traefik.http.routers.ftp-manager.entrypoints=http"
+      - "traefik.http.routers.ftp-manager.rule=Host(`ftp.example.com`)"
+      - "traefik.http.middlewares.ftp-manager-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.ftp-manager.middlewares=ftp-manager-https-redirect"
+      - "traefik.http.routers.ftp-manager-secure.entrypoints=https"
+      - "traefik.http.routers.ftp-manager-secure.rule=Host(`ftp.example.com`)"
+      - "traefik.http.routers.ftp-manager-secure.tls=true"
+      - "traefik.http.routers.ftp-manager-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.ftp-manager-secure.service=ftp-manager"
+      - "traefik.http.services.ftp-manager.loadbalancer.server.port=8080"
+
+      - "traefik.tcp.routers.ftp-server.entrypoints=ftp"
+      - "traefik.tcp.routers.ftp-server.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.ftp-server.service=ftp-server"
+      - "traefik.tcp.services.ftp-server.loadbalancer.server.port=21"
+
+networks:
+  proxy:
+    external: true

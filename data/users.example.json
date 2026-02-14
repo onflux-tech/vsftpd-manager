@@ -1,0 +1,8 @@
+{
+  "users": {
+    "demo": {
+      "password": "Demo123!",
+      "home": "/ftp/demo"
+    }
+  }
+}
