@@ -4,6 +4,7 @@ import json
 import os
 import pwd
 import re
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -723,12 +724,20 @@ def update_password(username: str, payload: UpdatePasswordRequest) -> dict:
 def delete_user(username: str) -> None:
     user = validate_username(username)
     try:
-        pwd.getpwnam(user)
+        entry = pwd.getpwnam(user)
     except KeyError:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
+    # Captura o home ANTES de remover o usuário do sistema
+    home_dir = Path(entry.pw_dir)
+
     run(["deluser", user])
     subprocess.run(["delgroup", user], capture_output=True, check=False)
+
+    # Remover a pasta física do usuário (somente se estiver dentro de /ftp)
+    ftp_root = FTP_ROOT.resolve()
+    if home_dir.exists() and ftp_root in home_dir.resolve().parents and home_dir.resolve() != ftp_root:
+        shutil.rmtree(home_dir, ignore_errors=True)
 
     # Remover do banco JSON
     db = load_db()
